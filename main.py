@@ -45,6 +45,8 @@ def courses(user_id, accessToken):
                         print(f"rollcall_id = {rollcall_id}")
                         print(" 開放簽到！")
                         print(course_data['course_name'] + checkIn(user_id, accessToken, rollcall_id))
+                else:
+                    print("尚未有課程開放簽到")
             time.sleep(3)
 
 
