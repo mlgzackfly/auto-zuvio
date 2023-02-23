@@ -33,10 +33,12 @@ def courses(user_id, accessToken):
     course_json = json.loads(response.content)
     if course_json['status']: # 判斷資料獲取是否成功
         print("這學期有修的課為")
+        for course_data in course_json['courses']:
+            if "Zuvio" not in course_data['teacher_name']:  # 避免 Zuvio 官方活動之類的課程
+                print(course_data['course_name'] + " - " + course_data['teacher_name'])
         while True:
             for course_data in course_json['courses']:
                 if "Zuvio" not in course_data['teacher_name']: # 避免 Zuvio 官方活動之類的課程
-                    print(course_data['course_name'] + " - " +  course_data['teacher_name'])
                     rollcall_id = check(course_data['course_id'])
                     if rollcall_id != "":  # rollcall_id 不為空的話代表可以簽到
                         print(f"rollcall_id = {rollcall_id}")
