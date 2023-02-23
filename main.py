@@ -2,6 +2,7 @@ import requests
 import re
 from bs4 import BeautifulSoup
 import json
+import time
 
 session = requests.Session() # 設定 Session
 
@@ -44,6 +45,7 @@ def courses(user_id, accessToken):
                         print(f"rollcall_id = {rollcall_id}")
                         print(" 開放簽到！")
                         print(course_data['course_name'] + checkIn(user_id, accessToken, rollcall_id))
+            time.sleep(3)
 
 
 def check(course_ID):
