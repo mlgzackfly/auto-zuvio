@@ -19,6 +19,8 @@ python main.py
 
 3. 輸入學號及密碼
 
+如果需要更改帳密的話，請至 config.ini 修改
+
 ### 示意圖
 
 ![](https://i.imgur.com/VkJGU0x.png)
