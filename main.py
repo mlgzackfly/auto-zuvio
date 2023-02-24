@@ -3,14 +3,27 @@ import re
 from bs4 import BeautifulSoup
 import json
 import time
+import configparser
+import os
+
 
 session = requests.Session() # 設定 Session
+config = configparser.ConfigParser()
 
 
 def main():
     login = "https://irs.zuvio.com.tw/irs/submitLogin"
-    account = input("請輸入學號：")
-    password = input("請輸入密碼：")
+    if not os.path.exists("config.ini"):
+        account = input("請輸入學號：")
+        password = input("請輸入密碼：")
+        with open('config.ini', 'w') as f:
+            config['user'] = {}
+            config['user']['account'] = account
+            config['user']['password'] = password
+            config.write(f)
+    config.read('config.ini')
+    account = config['user']['account']
+    password = config['user']['password']
     data = {
         'email': account + "@nkust.edu.tw",
         'password': password,
