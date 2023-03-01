@@ -9,7 +9,7 @@ import os
 
 session = requests.Session() # 設定 Session
 config = configparser.ConfigParser()
-
+isLoop = True
 
 def main():
     login = "https://irs.zuvio.com.tw/irs/submitLogin"
@@ -50,7 +50,7 @@ def courses(user_id, accessToken):
         for course_data in course_json['courses']:
             if "Zuvio" not in course_data['teacher_name']:  # 避免 Zuvio 官方活動之類的課程
                 print(course_data['course_name'] + " - " + course_data['teacher_name'])
-        while True:
+        while isLoop:
             for course_data in course_json['courses']:
                 if "Zuvio" not in course_data['teacher_name']: # 避免 Zuvio 官方活動之類的課程
                     rollcall_id = check(course_data['course_id'])
