@@ -1,3 +1,6 @@
+import random
+from datetime import datetime
+
 import requests
 import re
 from bs4 import BeautifulSoup
@@ -46,7 +49,8 @@ def courses(user_id, accessToken):
     response = session.get(url)
     course_json = json.loads(response.content)
     if course_json['status']: # 判斷資料獲取是否成功
-        print("這學期有修的課為")
+        print(f"今天是 {datetime.today().strftime('%Y/%m/%d')}")
+        print("這學期有修的課為：")
         for course_data in course_json['courses']:
             if "Zuvio" not in course_data['teacher_name']:  # 避免 Zuvio 官方活動之類的課程
                 print(course_data['course_name'] + " - " + course_data['teacher_name'])
@@ -59,8 +63,8 @@ def courses(user_id, accessToken):
                         print(" 開放簽到！")
                         print(course_data['course_name'] + checkIn(user_id, accessToken, rollcall_id))
                 else:
-                    print("尚未有課程開放簽到")
-            time.sleep(3)
+                    print(f"{datetime.today().strftime('%H:%M:%S')} 尚未有課程開放簽到")
+            time.sleep(random.randint(1,5))
 
 
 def check(course_ID):
