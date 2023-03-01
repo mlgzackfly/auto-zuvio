@@ -15,15 +15,15 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QHBoxLayout, QLabel,
-    QLineEdit, QMainWindow, QPushButton, QSizePolicy,
-    QTextEdit, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QHBoxLayout, QLabel, QLineEdit,
+    QMainWindow, QPushButton, QSizePolicy, QTextEdit,
+    QVBoxLayout, QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(471, 347)
+        MainWindow.resize(454, 347)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.layoutWidget = QWidget(self.centralwidget)
@@ -68,9 +68,6 @@ class Ui_MainWindow(object):
         self.outputMsg.setObjectName(u"outputMsg")
         self.outputMsg.setGeometry(QRect(30, 260, 331, 51))
         self.outputMsg.setReadOnly(True)
-        self.isLoop = QCheckBox(self.centralwidget)
-        self.isLoop.setObjectName(u"isLoop")
-        self.isLoop.setGeometry(QRect(370, 100, 85, 20))
         self.website = QLabel(self.centralwidget)
         self.website.setObjectName(u"website")
         self.website.setGeometry(QRect(200, 320, 71, 16))
@@ -117,7 +114,6 @@ class Ui_MainWindow(object):
         self.passwordInput.setInputMask("")
         self.loginButton.setText(QCoreApplication.translate("MainWindow", u"\u555f\u52d5", None))
         self.title.setText(QCoreApplication.translate("MainWindow", u"Zuvio \u81ea\u52d5\u9ede\u540d\u5c0f\u5e6b\u624b", None))
-        self.isLoop.setText(QCoreApplication.translate("MainWindow", u"\u7c3d\u5230\u5f8c\u505c\u6b62", None))
         self.website.setText(QCoreApplication.translate("MainWindow", u"mlgzackfly.com", None))
         self.aboutButton.setText(QCoreApplication.translate("MainWindow", u"\u95dc\u65bc", None))
         self.settingsButton.setText(QCoreApplication.translate("MainWindow", u"\u8a2d\u5b9a", None))
