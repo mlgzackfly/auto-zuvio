@@ -5,6 +5,9 @@
 
 > ! 還沒實際測試過
 
+## 特色
+- 記住帳號密碼，開啟後按下啟動就好
+
 ## 使用方法
 
 1. 安裝所需套件
@@ -23,4 +26,4 @@ python main.py
 
 ### 示意圖
 
-![](https://i.imgur.com/VkJGU0x.png)
+![](https://i.imgur.com/hKlCc1b.png)
