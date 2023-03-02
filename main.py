@@ -34,8 +34,10 @@ def checkIn(user_id, accessToken, rollcall_id):
     jsonres = json.loads(response.text)
     if jsonres['status']:
         return " - 簽到成功！"
+    elif jsonres['msg'] == "ROLLCALL IS ANSWERED":
+        return " - 簽到失敗：已經簽過了！"
     else:
-        return "- 簽到失敗\n" + jsonres['msg']
+        return "- 簽到失敗：" + jsonres['msg']
 
 
 def check(course_ID):
