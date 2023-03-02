@@ -107,15 +107,13 @@ class MainWindow(QMainWindow):
                     if "Zuvio" not in course_data['teacher_name']:  # 避免 Zuvio 官方活動之類的課程
                         rollcall_id = check(course_data['course_id'])
                         if rollcall_id != "":  # rollcall_id 不為空的話代表可以簽到
-                            self.ui.outputMsg.setText("開放簽到！")
-                            self.ui.outputMsg.append(
-                                course_data['course_name'] + self.courses(user_id, accessToken))
+                            print(course_data['course_name'] + checkIn(user_id, accessToken, rollcall_id))
+                            self.ui.outputMsg.setText(
+                                course_data['course_name'] + checkIn(user_id, accessToken, rollcall_id))
                             QApplication.processEvents()
-                    else:
-                        self.ui.outputMsg.append(f"{datetime.today().strftime('%H:%M:%S')} 尚未有課程開放簽到")
-                        QApplication.processEvents()
-                        print(f"{datetime.today().strftime('%H:%M:%S')} 尚未有課程開放簽到")
-                time.sleep(random.randint(3, 7))
+                # self.ui.outputMsg.setText(f"{datetime.today().strftime('%H:%M:%S')} 尚未有課程開放簽到")
+                # QApplication.processEvents()
+                # print(f"{datetime.today().strftime('%H:%M:%S')} 尚未有課程開放簽到")
         else:
             self.ui.outputMsg.setText("Zuvio 出錯！")
 
