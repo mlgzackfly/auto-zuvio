@@ -87,7 +87,7 @@ class MainWindow(QMainWindow):
             self.ui.outputMsg.setText(e)
 
     def exit(self):
-        self.close()
+        sys.exit(app.exec())
 
     def courses(self, user_id, accessToken):
         url = f"https://irs.zuvio.com.tw/course/listStudentCurrentCourses?user_id={user_id}&accessToken={accessToken}"
