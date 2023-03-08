@@ -102,6 +102,9 @@ class MainWindow(QMainWindow):
                 if "Zuvio" not in course_data['teacher_name']:  # 避免 Zuvio 官方活動之類的課程
                     print(course_data['course_name'] + " - " + course_data['teacher_name'])
                     self.ui.courseList.append(course_data['course_name'] + " - " + course_data['teacher_name'])
+
+            self.ui.loginButton.setEnabled(0)
+
             while True:
                 for course_data in course_json['courses']:
                     if "Zuvio" not in course_data['teacher_name']:  # 避免 Zuvio 官方活動之類的課程
@@ -111,6 +114,9 @@ class MainWindow(QMainWindow):
                             self.ui.outputMsg.setText(
                                 course_data['course_name'] + checkIn(user_id, accessToken, rollcall_id))
                             QApplication.processEvents()
+                    else:
+                        return None
+
                 # self.ui.outputMsg.setText(f"{datetime.today().strftime('%H:%M:%S')} 尚未有課程開放簽到")
                 # QApplication.processEvents()
                 # print(f"{datetime.today().strftime('%H:%M:%S')} 尚未有課程開放簽到")
