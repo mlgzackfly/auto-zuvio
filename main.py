@@ -114,12 +114,9 @@ class MainWindow(QMainWindow):
                             self.ui.outputMsg.setText(
                                 course_data['course_name'] + checkIn(user_id, accessToken, rollcall_id))
                             QApplication.processEvents()
-                    else:
-                        return None
-
-                # self.ui.outputMsg.setText(f"{datetime.today().strftime('%H:%M:%S')} 尚未有課程開放簽到")
-                # QApplication.processEvents()
-                # print(f"{datetime.today().strftime('%H:%M:%S')} 尚未有課程開放簽到")
+                self.ui.outputMsg.setText(f"{datetime.today().strftime('%H:%M:%S')} 尚未有課程開放簽到")
+                QApplication.processEvents()
+                print(f"{datetime.today().strftime('%H:%M:%S')} 尚未有課程開放簽到")
         else:
             self.ui.outputMsg.setText("Zuvio 出錯！")
 
