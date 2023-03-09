@@ -3,8 +3,6 @@
 > 寫給自己用的，可以拿去改改  
 > 有問題也可以開 issues，或是送 PR
 
-> ! 還沒實際測試過
-
 ## 使用方法
 
 1. 安裝所需套件
@@ -23,4 +21,4 @@ python main.py
 
 ### 示意圖
 
-![](https://i.imgur.com/VkJGU0x.png)
+![](https://i.imgur.com/z65DDLq.png)
