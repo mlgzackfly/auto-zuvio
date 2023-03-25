@@ -43,6 +43,7 @@ def main():
         print("登入失敗！")
         main()
 
+signed_courses = set() # 存儲已簽到的課程
 
 def courses(user_id, accessToken):
     url = f"https://irs.zuvio.com.tw/course/listStudentCurrentCourses?user_id={user_id}&accessToken={accessToken}"
@@ -54,17 +55,24 @@ def courses(user_id, accessToken):
         for course_data in course_json['courses']:
             if "Zuvio" not in course_data['teacher_name']:  # 避免 Zuvio 官方活動之類的課程
                 print(course_data['course_name'] + " - " + course_data['teacher_name'])
+        already_checked = []
         while isLoop:
+            has_course_available = False
             for course_data in course_json['courses']:
-                if "Zuvio" not in course_data['teacher_name']: # 避免 Zuvio 官方活動之類的課程
+                if course_data in already_checked:
+                    continue
+                if "Zuvio" not in course_data['teacher_name']:
                     rollcall_id = check(course_data['course_id'])
-                    if rollcall_id != "":  # rollcall_id 不為空的話代表可以簽到
-                        # print(f"rollcall_id = {rollcall_id}")
+                    if rollcall_id != "":
                         print(" 開放簽到！")
                         print(course_data['course_name'] + checkIn(user_id, accessToken, rollcall_id))
+                        has_course_available = True
                 else:
                     print(f"{datetime.today().strftime('%H:%M:%S')} 尚未有課程開放簽到")
-            time.sleep(random.randint(1,5))
+            already_checked.append(course_data)
+            time.sleep(random.randint(1, 5))
+            if not has_course_available:
+                print(f"{datetime.today().strftime('%H:%M:%S')} 尚未有課程開放簽到")
 
 
 def check(course_ID):
