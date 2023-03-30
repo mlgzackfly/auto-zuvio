@@ -64,11 +64,8 @@ def courses(user_id, accessToken):
                 if "Zuvio" not in course_data['teacher_name']:
                     rollcall_id = check(course_data['course_id'])
                     if rollcall_id != "":
-                        print(" 開放簽到！")
                         print(course_data['course_name'] + checkIn(user_id, accessToken, rollcall_id))
                         has_course_available = True
-                else:
-                    print(f"{datetime.today().strftime('%H:%M:%S')} 尚未有課程開放簽到")
             already_checked.append(course_data)
             time.sleep(random.randint(1, 5))
             if not has_course_available:
@@ -102,7 +99,7 @@ def checkIn(user_id, accessToken, rollcall_id):
     if jsonres['status']:
         return " - 簽到成功！"
     else:
-        print("簽到失敗：" + jsonres['msg'])
+        return " - 簽到失敗：" + jsonres['msg']
 
 
 if __name__ == '__main__':
