@@ -76,7 +76,7 @@ def courses(user_id, accessToken):
             already_checked.append(course_data)
             time.sleep(random.randint(1, 5))
             if not has_course_available:
-                print(f"{datetime.today().strftime('%H:%M:%S')} 尚未有課程開放簽到")
+                print(f"{datetime.today().strftime('%H:%M:%S')} 尚未有課程開放簽到", end='\r')
 
 
 def check(course_ID):
