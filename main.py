@@ -41,6 +41,13 @@ def main():
         courses(user_id, accessToken)
     except:
         print("登入失敗！")
+        account = input("請輸入學號：")
+        password = input("請輸入密碼：")
+        with open('config.ini', 'w') as f:
+            config['user'] = {}
+            config['user']['account'] = account
+            config['user']['password'] = password
+            config.write(f)
         main()
 
 signed_courses = set() # 存儲已簽到的課程
