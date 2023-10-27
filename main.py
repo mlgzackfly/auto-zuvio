@@ -56,6 +56,13 @@ def courses(user_id, accessToken):
     url = f"https://irs.zuvio.com.tw/course/listStudentCurrentCourses?user_id={user_id}&accessToken={accessToken}"
     response = session.get(url)
     course_json = json.loads(response.content)
+    if 'location' not in config.sections():
+        print("看來你還沒有經緯度資訊，預設的經緯度會在楠梓校區的大仁樓")
+        config['location'] = {}
+        config['location']['lng'] = input('請輸入經度：')
+        config['location']['lat'] = input('請輸入緯度：')
+        with open('config.ini', 'w') as configfile:
+            config.write(configfile)
     if course_json['status']: # 判斷資料獲取是否成功
         print(f"今天是 {datetime.today().strftime('%Y/%m/%d')}")
         print("這學期有修的課為：")
@@ -90,9 +97,12 @@ def check(course_ID):
 
 def checkIn(user_id, accessToken, rollcall_id):
     url = "https://irs.zuvio.com.tw/app_v2/makeRollcall"
-    # 經緯度為楠梓校區大仁樓
+    # 預設經緯度為楠梓校區大仁樓
     lat = "22.725946571118374"
     lng = "120.31566086504968"
+    if 'location' in config.sections() and config['location']['lng'] is not None and config['location']['lat'] is not None:
+        lng = config['location']['lng']
+        lat = config['location']['lat']
     data = {
         'user_id': user_id,
         'accessToken': accessToken,
