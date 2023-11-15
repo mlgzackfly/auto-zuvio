@@ -7,7 +7,7 @@
 
 1. 安裝所需套件
 ```
-pip -r requirement.txt
+pip install -r requirements.txt
 ```
 
 2. 執行檔案
