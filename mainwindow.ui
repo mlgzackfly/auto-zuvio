@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Zuvio 自動點名小幫手 @mlgzackgly</string>
+   <string>Zuvio 自動點名小幫手 @mlgzackfly</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QWidget" name="layoutWidget">
