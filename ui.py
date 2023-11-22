@@ -108,7 +108,7 @@ class Ui_MainWindow(object):
     # setupUi
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"Zuvio \u81ea\u52d5\u9ede\u540d\u5c0f\u5e6b\u624b @mlgzackgly", None))
+        MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"Zuvio \u81ea\u52d5\u9ede\u540d\u5c0f\u5e6b\u624b @mlgzackfly", None))
         self.accountLabel.setText(QCoreApplication.translate("MainWindow", u"\u5b78\u865f", None))
         self.passwordLabel.setText(QCoreApplication.translate("MainWindow", u"\u5bc6\u78bc", None))
         self.passwordInput.setInputMask("")
