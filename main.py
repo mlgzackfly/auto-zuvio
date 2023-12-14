@@ -20,8 +20,8 @@ config = configparser.ConfigParser()
 def checkIn(user_id, accessToken, rollcall_id):
     url = "https://irs.zuvio.com.tw/app_v2/makeRollcall"
     # 經緯度為楠梓校區大仁樓
-    lat = "22.725946571118374"
-    lng = "120.31566086504968"
+    lat = "22.725946571118374" # 緯度
+    lng = "120.31566086504968" # 經度
     data = {
         'user_id': user_id,
         'accessToken': accessToken,
