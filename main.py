@@ -110,7 +110,7 @@ class MainWindow(QMainWindow):
                     if "Zuvio" not in course_data['teacher_name']:  # 避免 Zuvio 官方活動之類的課程
                         rollcall_id = check(course_data['course_id'])
                         if rollcall_id != "":  # rollcall_id 不為空的話代表可以簽到
-                            print(course_data['course_name'] + checkIn(user_id, accessToken, rollcall_id))
+                            print(course_data['course_name'] + checkIn(user_id, accessToken, rollcall_id), end='\r')
                             self.ui.outputMsg.setText(
                                 course_data['course_name'] + checkIn(user_id, accessToken, rollcall_id))
                             QApplication.processEvents()
