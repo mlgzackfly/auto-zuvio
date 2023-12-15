@@ -3,7 +3,7 @@
 > 寫給自己用的，可以拿去改改  
 > 有問題也可以開 issues，或是送 PR
 
-> ! 還沒實際測試過
+> *還沒實際測試過
 
 ## 特色
 - 記住帳號密碼，開啟後按下啟動就好
@@ -26,4 +26,4 @@ python main.py
 
 ### 示意圖
 
-![](https://i.imgur.com/hKlCc1b.png)
+![](https://www.mlgzackfly.com/img/autozuvio.png)
