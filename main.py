@@ -289,12 +289,49 @@ class ZuvioAutoChecker:
         
         return credentials
     
+    def test_login_and_setup(self, credentials: UserCredentials) -> Optional[AuthToken]:
+        """測試登入並處理登入失敗的情況"""
+        max_attempts = 3
+        attempt = 0
+        
+        while attempt < max_attempts:
+            print(f"\n正在測試登入... (嘗試 {attempt + 1}/{max_attempts})")
+            
+            auth_token = self.auth_service.login(credentials)
+            
+            if auth_token:
+                print("✅ 登入測試成功！")
+                return auth_token
+            else:
+                attempt += 1
+                print(f"❌ 登入測試失敗！(嘗試 {attempt}/{max_attempts})")
+                
+                if attempt < max_attempts:
+                    print("\n請檢查您的帳號密碼是否正確")
+                    retry = input("是否要重新輸入帳號密碼？(y/n): ").lower().strip()
+                    
+                    if retry == 'y' or retry == 'yes':
+                        print("\n請重新輸入帳號資訊")
+                        account = input("請輸入完整帳號：")
+                        password = input("請輸入密碼：")
+                        
+                        credentials = UserCredentials(account=account, password=password)
+                        self.config_manager.save_user_credentials(credentials)
+                    else:
+                        print("取消登入測試")
+                        return None
+                else:
+                    print("已達到最大嘗試次數，登入失敗")
+                    return None
+        
+        return None
+    
     def setup_location(self) -> Location:
         """設定位置資訊"""
         location = self.config_manager.get_location()
         
         if not location:
-            print("首次使用，請設定您的位置資訊")
+            print("\n登入成功！現在請設定您的位置資訊")
             print("預設位置為楠梓校區大仁樓")
             
             lng = input('請輸入經度（直接按 Enter 使用預設值 120.31566086504968）：')
@@ -306,6 +343,7 @@ class ZuvioAutoChecker:
             )
             
             self.config_manager.save_location(location)
+            print("✅ 位置資訊已儲存")
         
         return location
     
@@ -356,24 +394,14 @@ class ZuvioAutoChecker:
             # 設定使用者憑證
             credentials = self.setup_user_credentials()
             
-            # 設定位置資訊
-            location = self.setup_location()
-            
-            # 執行登入
-            auth_token = self.auth_service.login(credentials)
+            # 先測試登入，確認成功後再進行後續設定
+            auth_token = self.test_login_and_setup(credentials)
             if not auth_token:
-                print("登入失敗！請檢查您的帳號密碼是否正確")
-                
-                # 重新設定憑證
-                print("請重新輸入帳號資訊")
-                account = input("請輸入完整帳號：")
-                password = input("請輸入密碼：")
-                
-                new_credentials = UserCredentials(account=account, password=password)
-                self.config_manager.save_user_credentials(new_credentials)
-                
-                # 重新執行
-                return self.run()
+                print("登入測試失敗，程式結束")
+                return
+            
+            # 登入成功後，設定位置資訊
+            location = self.setup_location()
             
             # 初始化課程服務
             self.course_service = CourseService(self.auth_service.session)
