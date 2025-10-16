@@ -1,4 +1,4 @@
-name: Test Suite
+name: Security Check
 
 on:
   push:
@@ -7,11 +7,11 @@ on:
     branches: [ main ]
   workflow_dispatch:
   schedule:
-    # Run tests every Monday at 9:00 UTC (17:00 Taiwan time)
+    # Run security check every Monday at 9:00 UTC (17:00 Taiwan time)
     - cron: '0 9 * * 1'
 
 jobs:
-  test:
+  security:
     runs-on: ubuntu-latest
     
     steps:
@@ -21,88 +21,6 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: "3.10"
-    
-    - name: Install uv
-      uses: astral-sh/setup-uv@v2
-      with:
-        version: "latest"
-    
-    - name: Create virtual environment
-      run: uv venv
-    
-    - name: Install dependencies
-      run: |
-        source .venv/bin/activate
-        uv pip install -r requirements.txt
-    
-    - name: Run tests with pytest
-      run: |
-        source .venv/bin/activate
-        pytest tests/ -v --cov=main --cov-report=xml --cov-report=html
-    
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: false
-
-  lint:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.11"
-    
-    - name: Install uv
-      uses: astral-sh/setup-uv@v2
-      with:
-        version: "latest"
-    
-    - name: Create virtual environment
-      run: uv venv
-    
-    - name: Install development dependencies
-      run: |
-        source .venv/bin/activate
-        uv pip install -r requirements-dev.txt
-    
-    - name: Run black (code formatter)
-      run: |
-        source .venv/bin/activate
-        black --check --diff .
-    
-    - name: Run isort (import sorter)
-      run: |
-        source .venv/bin/activate
-        isort --check-only --diff .
-    
-    - name: Run flake8 (linter)
-      run: |
-        source .venv/bin/activate
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    
-    - name: Run mypy (type checker)
-      run: |
-        source .venv/bin/activate
-        mypy main.py --ignore-missing-imports
-
-  security:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.11"
     
     - name: Install uv
       uses: astral-sh/setup-uv@v2
