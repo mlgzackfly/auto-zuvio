@@ -8,6 +8,7 @@ import time
 import os
 import logging
 import re
+import getpass
 from datetime import datetime
 from typing import Optional, Dict, List, Tuple
 from dataclasses import dataclass
@@ -15,6 +16,7 @@ from dataclasses import dataclass
 import requests
 from bs4 import BeautifulSoup
 import configparser
+from secure_input import get_hidden_password, set_file_permissions
 
 
 # Configure logging
@@ -74,9 +76,11 @@ class ConfigManager:
             self.config.read(self.config_file, encoding='utf-8')
     
     def save_config(self) -> None:
-        """Save configuration file"""
+        """Save configuration file with restricted permissions"""
         with open(self.config_file, 'w', encoding='utf-8') as f:
             self.config.write(f)
+        # Set restricted permissions (owner read/write only)
+        set_file_permissions(self.config_file)
     
     def get_user_credentials(self) -> Optional[UserCredentials]:
         """Get user credentials"""
@@ -281,7 +285,7 @@ class ZuvioAutoChecker:
         if not credentials:
             print("首次使用，請設定您的帳號資訊")
             account = input("請輸入完整帳號：")
-            password = input("請輸入密碼：")
+            password = get_hidden_password("請輸入密碼：")
             
             credentials = UserCredentials(account=account, password=password)
             self.config_manager.save_user_credentials(credentials)
@@ -312,7 +316,7 @@ class ZuvioAutoChecker:
                     if retry == 'y' or retry == 'yes':
                         print("\n請重新輸入帳號資訊")
                         account = input("請輸入完整帳號：")
-                        password = input("請輸入密碼：")
+                        password = get_hidden_password("請輸入密碼：")
                         
                         credentials = UserCredentials(account=account, password=password)
                         self.config_manager.save_user_credentials(credentials)
