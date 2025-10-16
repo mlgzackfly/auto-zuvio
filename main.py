@@ -17,7 +17,7 @@ isLoop = True
 def main():
     login = "https://irs.zuvio.com.tw/irs/submitLogin"
     if not os.path.exists("config.ini"):
-        account = input("請輸入學號：")
+        account = input("請輸入完整帳號（例如：學號@學校網域 或完整郵箱）：")
         password = input("請輸入密碼：")
         with open('config.ini', 'w') as f:
             config['user'] = {}
@@ -27,8 +27,17 @@ def main():
     config.read('config.ini')
     account = config['user']['account']
     password = config['user']['password']
+    
+    # 檢查是否已經包含 @ 符號，如果沒有則加上預設網域
+    if '@' not in account:
+        email = account + "@nkust.edu.tw"
+        print(f"注意：未偵測到完整郵箱格式，已自動加上預設網域：{email}")
+    else:
+        email = account
+        print(f"使用完整郵箱地址：{email}")
+    
     data = {
-        'email': account + "@nkust.edu.tw",
+        'email': email,
         'password': password,
         'current_language': "zh-TW"
     }
@@ -41,7 +50,7 @@ def main():
         courses(user_id, accessToken)
     except:
         print("登入失敗！")
-        account = input("請輸入學號：")
+        account = input("請輸入完整帳號：")
         password = input("請輸入密碼：")
         with open('config.ini', 'w') as f:
             config['user'] = {}
