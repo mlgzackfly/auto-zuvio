@@ -12,6 +12,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from main import ConfigManager, UserCredentials, Location
+from secure_input import set_file_permissions
 
 
 class TestConfigManager(unittest.TestCase):

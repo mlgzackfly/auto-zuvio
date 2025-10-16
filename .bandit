@@ -1,0 +1,11 @@
+exclude_dirs:
+  - tests
+  - venv
+  - .venv
+  - __pycache__
+
+skips:
+  - B105  # Skip hardcoded password tests for config file examples
+  - B602  # Skip subprocess shell tests for external commands
+  - B501  # Skip SSL verification tests for external APIs
+  - B301  # Skip pickle tests for serialization
