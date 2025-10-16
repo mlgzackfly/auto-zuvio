@@ -1,0 +1,18 @@
+# Development dependencies
+-r requirements.txt
+
+# Code formatting and linting
+black>=23.0.0
+flake8>=6.0.0
+isort>=5.12.0
+
+# Type checking
+mypy>=1.5.0
+
+# Security scanning
+bandit>=1.7.0
+safety>=2.3.0
+
+# Additional testing tools
+pytest-xdist>=3.3.0  # Parallel test execution
+pytest-html>=3.2.0   # HTML test reports
