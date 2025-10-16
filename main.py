@@ -155,18 +155,18 @@ class AuthService:
             scripts = soup.find_all("script", string=re.compile('var accessToken = "(.*?)";'))
             
             if not scripts:
-                logger.error("無法找到認證令牌")
+                logger.error("無法找到認證Token")
                 return None
             
             script_content = str(scripts[0])
             user_id = script_content.split('var user_id = ')[1].split(";")[0].strip('"')
             access_token = script_content.split('var accessToken = "')[1].split("\";")[0]
             
-            logger.info("成功取得認證令牌")
+            logger.info("成功取得認證Token")
             return AuthToken(user_id=user_id, access_token=access_token)
             
         except Exception as e:
-            logger.error(f"提取認證令牌失敗: {e}")
+            logger.error(f"提取認證Token失敗: {e}")
             return None
 
 
