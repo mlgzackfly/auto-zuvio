@@ -432,8 +432,13 @@ class ZuvioAutoChecker:
 
 def main():
     """Main function"""
-    app = ZuvioAutoChecker()
-    app.run()
+    try:
+        app = ZuvioAutoChecker()
+        app.run()
+    except KeyboardInterrupt:
+        print("\n程式已停止")
+    except Exception as e:
+        print(f"程式執行失敗：{e}")
 
 
 if __name__ == '__main__':

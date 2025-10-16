@@ -88,9 +88,11 @@ class TestCourseService(unittest.TestCase):
     
     def test_get_courses_json_decode_error(self):
         """Test course retrieval with JSON decode error"""
+        import json
+        
         mock_response = MagicMock()
         mock_response.raise_for_status.return_value = None
-        mock_response.json.side_effect = ValueError("Invalid JSON")
+        mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "doc", 0)
         
         self.mock_session.get.return_value = mock_response
         
@@ -189,9 +191,11 @@ class TestCourseService(unittest.TestCase):
     
     def test_perform_checkin_json_decode_error(self):
         """Test check-in with JSON decode error"""
+        import json
+        
         mock_response = MagicMock()
         mock_response.raise_for_status.return_value = None
-        mock_response.json.side_effect = ValueError("Invalid JSON")
+        mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "doc", 0)
         
         self.mock_session.post.return_value = mock_response
         
