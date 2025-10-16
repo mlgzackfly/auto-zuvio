@@ -1,131 +1,408 @@
-import random
-from datetime import datetime
+"""
+Zuvio 自動簽到系統
+重構版本 - 優化執行效率和可讀性
+"""
 
-import requests
-import re
-from bs4 import BeautifulSoup
+import random
 import json
 import time
-import configparser
 import os
+import logging
+import re
+from datetime import datetime
+from typing import Optional, Dict, List, Tuple
+from dataclasses import dataclass
+
+import requests
+from bs4 import BeautifulSoup
+import configparser
 
 
-session = requests.Session() # 設定 Session
-config = configparser.ConfigParser()
-isLoop = True
+# 配置日誌
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('zuvio.log', encoding='utf-8'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
-def main():
-    login = "https://irs.zuvio.com.tw/irs/submitLogin"
-    if not os.path.exists("config.ini"):
-        account = input("請輸入完整帳號（例如：學號@學校網域 或完整郵箱）：")
-        password = input("請輸入密碼：")
-        with open('config.ini', 'w') as f:
-            config['user'] = {}
-            config['user']['account'] = account
-            config['user']['password'] = password
-            config.write(f)
-    config.read('config.ini')
-    account = config['user']['account']
-    password = config['user']['password']
+
+@dataclass
+class UserCredentials:
+    """使用者憑證資料類別"""
+    account: str
+    password: str
     
-    # 檢查是否已經包含 @ 符號，如果沒有則加上預設網域
-    if '@' not in account:
-        email = account + "@nkust.edu.tw"
-        print(f"注意：未偵測到完整郵箱格式，已自動加上預設網域：{email}")
-    else:
-        email = account
-        print(f"使用完整郵箱地址：{email}")
+    @property
+    def email(self) -> str:
+        """取得完整郵箱地址"""
+        if '@' not in self.account:
+            email = f"{self.account}@nkust.edu.tw"
+            logger.info(f"自動加上預設網域：{email}")
+            return email
+        logger.info(f"使用完整郵箱地址：{self.account}")
+        return self.account
+
+
+@dataclass
+class Location:
+    """位置資訊資料類別"""
+    latitude: str
+    longitude: str
+
+
+@dataclass
+class AuthToken:
+    """認證令牌資料類別"""
+    user_id: str
+    access_token: str
+
+
+class ConfigManager:
+    """配置管理類別"""
     
-    data = {
-        'email': email,
-        'password': password,
-        'current_language': "zh-TW"
-    }
-    response = session.post(login, data=data)
-    try:
-        soup = BeautifulSoup(response.content, 'html.parser')
-        scripts = soup.find_all("script", string=re.compile('var accessToken = "(.*?)";'))
-        user_id = str(scripts[0]).split('var user_id = ')[1].split(";")[0]
-        accessToken = str(scripts[0]).split('var accessToken = "')[1].split("\";")[0]
-        courses(user_id, accessToken)
-    except:
-        print("登入失敗！")
-        account = input("請輸入完整帳號：")
-        password = input("請輸入密碼：")
-        with open('config.ini', 'w') as f:
-            config['user'] = {}
-            config['user']['account'] = account
-            config['user']['password'] = password
-            config.write(f)
-        main()
+    def __init__(self, config_file: str = "config.ini"):
+        self.config_file = config_file
+        self.config = configparser.ConfigParser()
+        self.load_config()
+    
+    def load_config(self) -> None:
+        """載入配置檔案"""
+        if os.path.exists(self.config_file):
+            self.config.read(self.config_file, encoding='utf-8')
+    
+    def save_config(self) -> None:
+        """儲存配置檔案"""
+        with open(self.config_file, 'w', encoding='utf-8') as f:
+            self.config.write(f)
+    
+    def get_user_credentials(self) -> Optional[UserCredentials]:
+        """取得使用者憑證"""
+        if 'user' not in self.config.sections():
+            return None
+        
+        user_section = self.config['user']
+        return UserCredentials(
+            account=user_section.get('account', ''),
+            password=user_section.get('password', '')
+        )
+    
+    def save_user_credentials(self, credentials: UserCredentials) -> None:
+        """儲存使用者憑證"""
+        if 'user' not in self.config.sections():
+            self.config.add_section('user')
+        
+        self.config['user']['account'] = credentials.account
+        self.config['user']['password'] = credentials.password
+        self.save_config()
+    
+    def get_location(self) -> Optional[Location]:
+        """取得位置資訊"""
+        if 'location' not in self.config.sections():
+            return None
+        
+        location_section = self.config['location']
+        return Location(
+            latitude=location_section.get('lat', ''),
+            longitude=location_section.get('lng', '')
+        )
+    
+    def save_location(self, location: Location) -> None:
+        """儲存位置資訊"""
+        if 'location' not in self.config.sections():
+            self.config.add_section('location')
+        
+        self.config['location']['lat'] = location.latitude
+        self.config['location']['lng'] = location.longitude
+        self.save_config()
 
-signed_courses = set() # 存儲已簽到的課程
 
-def courses(user_id, accessToken):
-    url = f"https://irs.zuvio.com.tw/course/listStudentCurrentCourses?user_id={user_id}&accessToken={accessToken}"
-    response = session.get(url)
-    course_json = json.loads(response.content)
-    if 'location' not in config.sections():
-        print("看來你還沒有經緯度資訊，預設的經緯度會在楠梓校區的大仁樓")
-        config['location'] = {}
-        config['location']['lng'] = input('請輸入經度：')
-        config['location']['lat'] = input('請輸入緯度：')
-        with open('config.ini', 'w') as configfile:
-            config.write(configfile)
-    if course_json['status']: # 判斷資料獲取是否成功
+class AuthService:
+    """認證服務類別"""
+    
+    def __init__(self):
+        self.session = requests.Session()
+        self.login_url = "https://irs.zuvio.com.tw/irs/submitLogin"
+    
+    def login(self, credentials: UserCredentials) -> Optional[AuthToken]:
+        """執行登入"""
+        try:
+            data = {
+                'email': credentials.email,
+                'password': credentials.password,
+                'current_language': "zh-TW"
+            }
+            
+            logger.info("嘗試登入...")
+            response = self.session.post(self.login_url, data=data)
+            response.raise_for_status()
+            
+            return self._extract_tokens(response.content)
+            
+        except requests.RequestException as e:
+            logger.error(f"登入請求失敗: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"登入過程中發生錯誤: {e}")
+            return None
+    
+    def _extract_tokens(self, html_content: bytes) -> Optional[AuthToken]:
+        """從 HTML 回應中提取認證令牌"""
+        try:
+            soup = BeautifulSoup(html_content, 'html.parser')
+            scripts = soup.find_all("script", string=re.compile('var accessToken = "(.*?)";'))
+            
+            if not scripts:
+                logger.error("無法找到認證令牌")
+                return None
+            
+            script_content = str(scripts[0])
+            user_id = script_content.split('var user_id = ')[1].split(";")[0].strip('"')
+            access_token = script_content.split('var accessToken = "')[1].split("\";")[0]
+            
+            logger.info("成功取得認證令牌")
+            return AuthToken(user_id=user_id, access_token=access_token)
+            
+        except Exception as e:
+            logger.error(f"提取認證令牌失敗: {e}")
+            return None
+
+
+class CourseService:
+    """課程管理服務類別"""
+    
+    def __init__(self, session: requests.Session):
+        self.session = session
+        self.signed_courses: set = set()
+    
+    def get_courses(self, auth_token: AuthToken) -> Optional[List[Dict]]:
+        """取得課程清單"""
+        try:
+            url = f"https://irs.zuvio.com.tw/course/listStudentCurrentCourses?user_id={auth_token.user_id}&accessToken={auth_token.access_token}"
+            
+            response = self.session.get(url)
+            response.raise_for_status()
+            
+            course_data = response.json()
+            
+            if not course_data.get('status'):
+                logger.error("取得課程資料失敗")
+                return None
+            
+            # 過濾掉 Zuvio 官方活動
+            valid_courses = [
+                course for course in course_data.get('courses', [])
+                if "Zuvio" not in course.get('teacher_name', '')
+            ]
+            
+            logger.info(f"成功取得 {len(valid_courses)} 門課程")
+            return valid_courses
+            
+        except requests.RequestException as e:
+            logger.error(f"取得課程資料請求失敗: {e}")
+            return None
+        except json.JSONDecodeError as e:
+            logger.error(f"解析課程資料失敗: {e}")
+            return None
+    
+    def check_rollcall_availability(self, course_id: str) -> Optional[str]:
+        """檢查課程是否有開放簽到"""
+        try:
+            url = f"https://irs.zuvio.com.tw/student5/irs/rollcall/{course_id}"
+            
+            response = self.session.get(url)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.content, 'html.parser')
+            scripts = soup.find_all("script", string=re.compile("var rollcall_id = '(.*?)';"))
+            
+            if not scripts:
+                return None
+            
+            script_content = str(scripts[0])
+            rollcall_id = script_content.split("var rollcall_id = '")[1].split("';")[0]
+            
+            return rollcall_id if rollcall_id else None
+            
+        except Exception as e:
+            logger.error(f"檢查簽到可用性失敗 (課程ID: {course_id}): {e}")
+            return None
+    
+    def perform_checkin(self, auth_token: AuthToken, rollcall_id: str, location: Location) -> Tuple[bool, str]:
+        """執行簽到"""
+        try:
+            url = "https://irs.zuvio.com.tw/app_v2/makeRollcall"
+            
+            data = {
+                'user_id': auth_token.user_id,
+                'accessToken': auth_token.access_token,
+                'rollcall_id': rollcall_id,
+                'device': 'WEB',
+                'lat': location.latitude,
+                'lng': location.longitude
+            }
+            
+            response = self.session.post(url, data=data)
+            response.raise_for_status()
+            
+            result = response.json()
+            
+            if result.get('status'):
+                logger.info(f"簽到成功 (Rollcall ID: {rollcall_id})")
+                return True, "簽到成功！"
+            else:
+                error_msg = result.get('msg', '未知錯誤')
+                logger.warning(f"簽到失敗: {error_msg}")
+                return False, f"簽到失敗：{error_msg}"
+                
+        except requests.RequestException as e:
+            logger.error(f"簽到請求失敗: {e}")
+            return False, f"簽到請求失敗：{e}"
+        except json.JSONDecodeError as e:
+            logger.error(f"解析簽到回應失敗: {e}")
+            return False, f"解析簽到回應失敗：{e}"
+
+
+class ZuvioAutoChecker:
+    """Zuvio 自動簽到主類別"""
+    
+    def __init__(self):
+        self.config_manager = ConfigManager()
+        self.auth_service = AuthService()
+        self.course_service = None
+        self.running = True
+    
+    def setup_user_credentials(self) -> UserCredentials:
+        """設定使用者憑證"""
+        credentials = self.config_manager.get_user_credentials()
+        
+        if not credentials:
+            print("首次使用，請設定您的帳號資訊")
+            account = input("請輸入完整帳號（例如：學號@學校網域 或完整郵箱）：")
+            password = input("請輸入密碼：")
+            
+            credentials = UserCredentials(account=account, password=password)
+            self.config_manager.save_user_credentials(credentials)
+        
+        return credentials
+    
+    def setup_location(self) -> Location:
+        """設定位置資訊"""
+        location = self.config_manager.get_location()
+        
+        if not location:
+            print("首次使用，請設定您的位置資訊")
+            print("預設位置為楠梓校區大仁樓")
+            
+            lng = input('請輸入經度（直接按 Enter 使用預設值 120.31566086504968）：')
+            lat = input('請輸入緯度（直接按 Enter 使用預設值 22.725946571118374）：')
+            
+            location = Location(
+                longitude=lng or "120.31566086504968",
+                latitude=lat or "22.725946571118374"
+            )
+            
+            self.config_manager.save_location(location)
+        
+        return location
+    
+    def display_courses(self, courses: List[Dict]) -> None:
+        """顯示課程清單"""
         print(f"今天是 {datetime.today().strftime('%Y/%m/%d')}")
         print("這學期有修的課為：")
-        for course_data in course_json['courses']:
-            if "Zuvio" not in course_data['teacher_name']:  # 避免 Zuvio 官方活動之類的課程
-                print(course_data['course_name'] + " - " + course_data['teacher_name'])
+        
+        for course in courses:
+            print(f"{course['course_name']} - {course['teacher_name']}")
+    
+    def run_checkin_loop(self, auth_token: AuthToken, courses: List[Dict], location: Location) -> None:
+        """執行簽到迴圈"""
         already_checked = []
-        while isLoop:
+        
+        while self.running:
             has_course_available = False
-            for course_data in course_json['courses']:
-                if course_data in already_checked:
+            
+            for course in courses:
+                if course in already_checked:
                     continue
-                if "Zuvio" not in course_data['teacher_name']:
-                    rollcall_id = check(course_data['course_id'])
-                    if rollcall_id != "":
-                        print(course_data['course_name'] + checkIn(user_id, accessToken, rollcall_id))
-                        has_course_available = True
-            already_checked.append(course_data)
-            time.sleep(random.randint(1, 5))
+                
+                rollcall_id = self.course_service.check_rollcall_availability(course['course_id'])
+                
+                if rollcall_id:
+                    success, message = self.course_service.perform_checkin(
+                        auth_token, rollcall_id, location
+                    )
+                    
+                    print(f"{course['course_name']} - {message}")
+                    has_course_available = True
+                    
+                    # 將已簽到的課程加入已檢查清單
+                    already_checked.append(course)
+            
             if not has_course_available:
-                print(f"{datetime.today().strftime('%H:%M:%S')} 尚未有課程開放簽到", end='\r')
+                current_time = datetime.now().strftime('%H:%M:%S')
+                print(f"{current_time} 尚未有課程開放簽到", end='\r')
+            
+            # 隨機等待 1-5 秒
+            time.sleep(random.randint(1, 5))
+    
+    def run(self) -> None:
+        """執行主程式"""
+        try:
+            logger.info("啟動 Zuvio 自動簽到系統")
+            
+            # 設定使用者憑證
+            credentials = self.setup_user_credentials()
+            
+            # 設定位置資訊
+            location = self.setup_location()
+            
+            # 執行登入
+            auth_token = self.auth_service.login(credentials)
+            if not auth_token:
+                print("登入失敗！請檢查您的帳號密碼是否正確")
+                
+                # 重新設定憑證
+                print("請重新輸入帳號資訊")
+                account = input("請輸入完整帳號：")
+                password = input("請輸入密碼：")
+                
+                new_credentials = UserCredentials(account=account, password=password)
+                self.config_manager.save_user_credentials(new_credentials)
+                
+                # 重新執行
+                return self.run()
+            
+            # 初始化課程服務
+            self.course_service = CourseService(self.auth_service.session)
+            
+            # 取得課程清單
+            courses = self.course_service.get_courses(auth_token)
+            if not courses:
+                print("無法取得課程資料")
+                return
+            
+            # 顯示課程清單
+            self.display_courses(courses)
+            
+            # 開始簽到迴圈
+            print("\n開始監控簽到...")
+            self.run_checkin_loop(auth_token, courses, location)
+            
+        except KeyboardInterrupt:
+            logger.info("使用者中斷程式")
+            print("\n程式已停止")
+        except Exception as e:
+            logger.error(f"程式執行過程中發生未預期的錯誤: {e}")
+            print(f"程式執行失敗：{e}")
 
 
-def check(course_ID):
-    url = f"https://irs.zuvio.com.tw/student5/irs/rollcall/{course_ID}"
-    response = session.get(url)
-    soup = BeautifulSoup(response.content, 'html.parser')
-    scripts = soup.find_all("script", string=re.compile("var rollcall_id = '(.*?)';"))
-    rollcall_id = str(scripts[0]).split("var rollcall_id = '")[1].split("';")[0]
-    return rollcall_id
-
-
-def checkIn(user_id, accessToken, rollcall_id):
-    url = "https://irs.zuvio.com.tw/app_v2/makeRollcall"
-    # 預設經緯度為楠梓校區大仁樓
-    lat = "22.725946571118374"
-    lng = "120.31566086504968"
-    if 'location' in config.sections() and config['location']['lng'] is not None and config['location']['lat'] is not None:
-        lng = config['location']['lng']
-        lat = config['location']['lat']
-    data = {
-        'user_id': user_id,
-        'accessToken': accessToken,
-        'rollcall_id': rollcall_id,
-        'device': 'WEB',
-        'lat': lat,
-        'lng': lng
-    }
-    response = session.post(url, data=data)
-    jsonres = json.loads(response.text)
-    if jsonres['status']:
-        return " - 簽到成功！"
-    else:
-        return " - 簽到失敗：" + jsonres['msg']
+def main():
+    """主函數"""
+    app = ZuvioAutoChecker()
+    app.run()
 
 
 if __name__ == '__main__':
