@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main ]
   workflow_dispatch:
+  schedule:
+    # Run tests every Monday at 9:00 UTC (17:00 Taiwan time)
+    - cron: '0 9 * * 1'
 
 jobs:
   test:
