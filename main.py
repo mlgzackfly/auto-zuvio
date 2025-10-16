@@ -1,6 +1,5 @@
 """
 Zuvio 自動簽到系統
-重構版本 - 優化執行效率和可讀性
 """
 
 import random
@@ -18,7 +17,7 @@ from bs4 import BeautifulSoup
 import configparser
 
 
-# 配置日誌
+# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
@@ -32,37 +31,37 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class UserCredentials:
-    """使用者憑證資料類別"""
+    """User credentials data class"""
     account: str
     password: str
     
     @property
     def email(self) -> str:
-        """取得完整郵箱地址"""
+        """Get complete email address"""
         if '@' not in self.account:
             email = f"{self.account}@nkust.edu.tw"
-            logger.info(f"自動加上預設網域：{email}")
+            logger.info(f"Auto-appended default domain: {email}")
             return email
-        logger.info(f"使用完整郵箱地址：{self.account}")
+        logger.info(f"使用完整 mail：{self.account}")
         return self.account
 
 
 @dataclass
 class Location:
-    """位置資訊資料類別"""
+    """Location information data class"""
     latitude: str
     longitude: str
 
 
 @dataclass
 class AuthToken:
-    """認證令牌資料類別"""
+    """Authentication token data class"""
     user_id: str
     access_token: str
 
 
 class ConfigManager:
-    """配置管理類別"""
+    """Configuration management class"""
     
     def __init__(self, config_file: str = "config.ini"):
         self.config_file = config_file
@@ -70,17 +69,17 @@ class ConfigManager:
         self.load_config()
     
     def load_config(self) -> None:
-        """載入配置檔案"""
+        """Load configuration file"""
         if os.path.exists(self.config_file):
             self.config.read(self.config_file, encoding='utf-8')
     
     def save_config(self) -> None:
-        """儲存配置檔案"""
+        """Save configuration file"""
         with open(self.config_file, 'w', encoding='utf-8') as f:
             self.config.write(f)
     
     def get_user_credentials(self) -> Optional[UserCredentials]:
-        """取得使用者憑證"""
+        """Get user credentials"""
         if 'user' not in self.config.sections():
             return None
         
@@ -91,7 +90,7 @@ class ConfigManager:
         )
     
     def save_user_credentials(self, credentials: UserCredentials) -> None:
-        """儲存使用者憑證"""
+        """Save user credentials"""
         if 'user' not in self.config.sections():
             self.config.add_section('user')
         
@@ -100,7 +99,7 @@ class ConfigManager:
         self.save_config()
     
     def get_location(self) -> Optional[Location]:
-        """取得位置資訊"""
+        """Get location information"""
         if 'location' not in self.config.sections():
             return None
         
@@ -111,7 +110,7 @@ class ConfigManager:
         )
     
     def save_location(self, location: Location) -> None:
-        """儲存位置資訊"""
+        """Save location information"""
         if 'location' not in self.config.sections():
             self.config.add_section('location')
         
@@ -121,14 +120,14 @@ class ConfigManager:
 
 
 class AuthService:
-    """認證服務類別"""
+    """Authentication service class"""
     
     def __init__(self):
         self.session = requests.Session()
         self.login_url = "https://irs.zuvio.com.tw/irs/submitLogin"
     
     def login(self, credentials: UserCredentials) -> Optional[AuthToken]:
-        """執行登入"""
+        """Perform login"""
         try:
             data = {
                 'email': credentials.email,
@@ -150,7 +149,7 @@ class AuthService:
             return None
     
     def _extract_tokens(self, html_content: bytes) -> Optional[AuthToken]:
-        """從 HTML 回應中提取認證令牌"""
+        """Extract authentication tokens from HTML response"""
         try:
             soup = BeautifulSoup(html_content, 'html.parser')
             scripts = soup.find_all("script", string=re.compile('var accessToken = "(.*?)";'))
@@ -172,14 +171,14 @@ class AuthService:
 
 
 class CourseService:
-    """課程管理服務類別"""
+    """Course management service class"""
     
     def __init__(self, session: requests.Session):
         self.session = session
         self.signed_courses: set = set()
     
     def get_courses(self, auth_token: AuthToken) -> Optional[List[Dict]]:
-        """取得課程清單"""
+        """Get course list"""
         try:
             url = f"https://irs.zuvio.com.tw/course/listStudentCurrentCourses?user_id={auth_token.user_id}&accessToken={auth_token.access_token}"
             
@@ -192,7 +191,7 @@ class CourseService:
                 logger.error("取得課程資料失敗")
                 return None
             
-            # 過濾掉 Zuvio 官方活動
+            # Filter out Zuvio official activities
             valid_courses = [
                 course for course in course_data.get('courses', [])
                 if "Zuvio" not in course.get('teacher_name', '')
@@ -209,7 +208,7 @@ class CourseService:
             return None
     
     def check_rollcall_availability(self, course_id: str) -> Optional[str]:
-        """檢查課程是否有開放簽到"""
+        """Check if course has rollcall available"""
         try:
             url = f"https://irs.zuvio.com.tw/student5/irs/rollcall/{course_id}"
             
@@ -232,7 +231,7 @@ class CourseService:
             return None
     
     def perform_checkin(self, auth_token: AuthToken, rollcall_id: str, location: Location) -> Tuple[bool, str]:
-        """執行簽到"""
+        """Perform check-in"""
         try:
             url = "https://irs.zuvio.com.tw/app_v2/makeRollcall"
             
@@ -267,7 +266,7 @@ class CourseService:
 
 
 class ZuvioAutoChecker:
-    """Zuvio 自動簽到主類別"""
+    """Zuvio auto check-in main class"""
     
     def __init__(self):
         self.config_manager = ConfigManager()
@@ -276,12 +275,12 @@ class ZuvioAutoChecker:
         self.running = True
     
     def setup_user_credentials(self) -> UserCredentials:
-        """設定使用者憑證"""
+        """Setup user credentials"""
         credentials = self.config_manager.get_user_credentials()
         
         if not credentials:
             print("首次使用，請設定您的帳號資訊")
-            account = input("請輸入完整帳號（例如：學號@學校網域 或完整郵箱）：")
+            account = input("請輸入完整帳號：")
             password = input("請輸入密碼：")
             
             credentials = UserCredentials(account=account, password=password)
@@ -290,7 +289,7 @@ class ZuvioAutoChecker:
         return credentials
     
     def test_login_and_setup(self, credentials: UserCredentials) -> Optional[AuthToken]:
-        """測試登入並處理登入失敗的情況"""
+        """Test login and handle login failure cases"""
         max_attempts = 3
         attempt = 0
         
@@ -300,11 +299,11 @@ class ZuvioAutoChecker:
             auth_token = self.auth_service.login(credentials)
             
             if auth_token:
-                print("✅ 登入測試成功！")
+                print("登入測試成功！")
                 return auth_token
             else:
                 attempt += 1
-                print(f"❌ 登入測試失敗！(嘗試 {attempt}/{max_attempts})")
+                print(f"登入測試失敗！(嘗試 {attempt}/{max_attempts})")
                 
                 if attempt < max_attempts:
                     print("\n請檢查您的帳號密碼是否正確")
@@ -327,7 +326,7 @@ class ZuvioAutoChecker:
         return None
     
     def setup_location(self) -> Location:
-        """設定位置資訊"""
+        """Setup location information"""
         location = self.config_manager.get_location()
         
         if not location:
@@ -343,12 +342,12 @@ class ZuvioAutoChecker:
             )
             
             self.config_manager.save_location(location)
-            print("✅ 位置資訊已儲存")
+            print("位置資訊已儲存")
         
         return location
     
     def display_courses(self, courses: List[Dict]) -> None:
-        """顯示課程清單"""
+        """Display course list"""
         print(f"今天是 {datetime.today().strftime('%Y/%m/%d')}")
         print("這學期有修的課為：")
         
@@ -356,7 +355,7 @@ class ZuvioAutoChecker:
             print(f"{course['course_name']} - {course['teacher_name']}")
     
     def run_checkin_loop(self, auth_token: AuthToken, courses: List[Dict], location: Location) -> None:
-        """執行簽到迴圈"""
+        """Execute check-in loop"""
         already_checked = []
         
         while self.running:
@@ -376,46 +375,46 @@ class ZuvioAutoChecker:
                     print(f"{course['course_name']} - {message}")
                     has_course_available = True
                     
-                    # 將已簽到的課程加入已檢查清單
+                    # Add checked-in courses to the already checked list
                     already_checked.append(course)
             
             if not has_course_available:
                 current_time = datetime.now().strftime('%H:%M:%S')
                 print(f"{current_time} 尚未有課程開放簽到", end='\r')
             
-            # 隨機等待 1-5 秒
+            # Random wait 1-5 seconds
             time.sleep(random.randint(1, 5))
     
     def run(self) -> None:
-        """執行主程式"""
+        """Execute main program"""
         try:
             logger.info("啟動 Zuvio 自動簽到系統")
             
-            # 設定使用者憑證
+            # Setup user credentials
             credentials = self.setup_user_credentials()
             
-            # 先測試登入，確認成功後再進行後續設定
+            # Test login first, then proceed with subsequent setup after confirmation
             auth_token = self.test_login_and_setup(credentials)
             if not auth_token:
                 print("登入測試失敗，程式結束")
                 return
             
-            # 登入成功後，設定位置資訊
+            # After successful login, setup location information
             location = self.setup_location()
             
-            # 初始化課程服務
+            # Initialize course service
             self.course_service = CourseService(self.auth_service.session)
             
-            # 取得課程清單
+            # Get course list
             courses = self.course_service.get_courses(auth_token)
             if not courses:
                 print("無法取得課程資料")
                 return
             
-            # 顯示課程清單
+            # Display course list
             self.display_courses(courses)
             
-            # 開始簽到迴圈
+            # Start check-in loop
             print("\n開始監控簽到...")
             self.run_checkin_loop(auth_token, courses, location)
             
@@ -428,7 +427,7 @@ class ZuvioAutoChecker:
 
 
 def main():
-    """主函數"""
+    """Main function"""
     app = ZuvioAutoChecker()
     app.run()
 
